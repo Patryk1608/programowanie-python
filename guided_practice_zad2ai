@@ -1,0 +1,130 @@
+import requests
+import csv
+import time
+import numpy as np
+from datetime import datetime # Potrzebne do obsługi dat
+
+# Adres do danych CSV z IMGW
+url = "https://danepubliczne.imgw.pl/api/data/synop/format/csv"
+
+# --- KROK 1: POBRANIE LISTY STACJI I WYBÓR ---
+
+print("Pobieram listę stacji...")
+odpowiedz = requests.get(url)
+tekst_danych = odpowiedz.text.splitlines()
+
+czytnik = csv.reader(tekst_danych)
+naglowki = next(czytnik) # Pomijamy pierwszy wiersz
+
+dostepne_stacje = []
+
+for wiersz in czytnik:
+    # wiersz[0] to ID, wiersz[1] to miasto
+    print(wiersz[0] + " - " + wiersz[1])
+    dostepne_stacje.append(wiersz)
+
+wybrane_id = input("\nPodaj ID stacji z listy powyżej: ")
+nazwa_stacji = ""
+
+# Szukamy nazwy stacji (prosta pętla)
+for stacja in dostepne_stacje:
+    if stacja[0] == wybrane_id:
+        nazwa_stacji = stacja[1]
+        break
+
+print("Wybrano stację: " + nazwa_stacji)
+
+
+# --- KROK 2: WPISANIE DATY (POPRAWIONE) ---
+
+data_koncowa = None
+
+while data_koncowa is None:
+    try:
+        print("\nDo kiedy program ma działać?")
+        wejscie = input("Podaj datę i godzinę (format RRRR-MM-DD GG:MM): ")
+        # Przykład: 2024-05-21 16:30
+        
+        # Zamieniamy napis na "zrozumiały" dla komputera czas
+        przetworzona_data = datetime.strptime(wejscie, "%Y-%m-%d %H:%M")
+        
+        # Sprawdzamy czy data jest w przyszłości
+        if przetworzona_data > datetime.now():
+            data_koncowa = przetworzona_data
+        else:
+            print("Błąd: Data musi być z przyszłości!")
+            
+    except ValueError:
+        print("Błąd: Zły format daty. Pamiętaj o myślnikach i dwukropku.")
+
+
+# --- KROK 3: PĘTLA GŁÓWNA ---
+
+print("\nRozpoczynam zbieranie danych do: " + str(data_koncowa))
+
+lista_pomiarow = [] 
+poprzednia_godzina = "" 
+
+# Pętla działa dopóki obecny czas jest mniejszy niż data końcowa
+while datetime.now() < data_koncowa:
+    
+    try:
+        r = requests.get(url)
+        dane_live = r.text.splitlines()
+        reader_live = csv.reader(dane_live)
+        
+        for wiersz in reader_live:
+            if wiersz[0] == wybrane_id:
+                aktualna_godzina = wiersz[3] # Kolumna 3 to godzina
+                
+                # Zapisujemy tylko jeśli godzina jest inna niż ostatnio
+                if aktualna_godzina != poprzednia_godzina:
+                    print("Znaleziono nowe dane z godziny: " + aktualna_godzina)
+                    lista_pomiarow.append(wiersz)
+                    poprzednia_godzina = aktualna_godzina
+                else:
+                    print("Dane aktualne (brak zmian)...")
+                break
+                
+    except:
+        print("Błąd połączenia...")
+
+    # Czekamy minutę (lub mniej dla testów)
+    time.sleep(60)
+
+
+# --- KROK 4: OBLICZENIA (STYL Z ZAJĘĆ) ---
+
+if len(lista_pomiarow) > 0:
+    # 1. Lista -> Numpy Array
+    tablica = np.array(lista_pomiarow)
+
+    # 2. Wyciągnięcie kolumny temperatury (indeks 4)
+    temperatury_str = tablica[:, 4]
+    
+    temperatury_float = []
+
+    # 3. Ręczna konwersja na float w pętli (tak jak w Twoim przykładzie)
+    for t in temperatury_str:
+        temperatury_float.append(float(t))
+
+    # 4. Z powrotem na numpy array do obliczeń
+    temperatury_np = np.array(temperatury_float)
+
+    srednia = np.mean(temperatury_np)
+    
+    print("\n--- WYNIKI ---")
+    print("Pomiary: ", temperatury_np)
+    print("Średnia: " + str(srednia))
+
+    # --- KROK 5: ZAPIS ---
+    nazwa_pliku = "wyniki_" + wybrane_id + ".txt"
+    with open(nazwa_pliku, 'w', encoding='utf8') as f:
+        f.write("Stacja: " + nazwa_stacji + "\n")
+        f.write("Okres: " + str(datetime.now()) + " - " + str(data_koncowa) + "\n")
+        f.write("Srednia: " + str(srednia))
+    
+    print("Zapisano w pliku: " + nazwa_pliku)
+
+else:
+    print("\nKoniec czasu. Nie udało się pobrać żadnych nowych pomiarów.")

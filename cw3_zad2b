@@ -1,0 +1,78 @@
+import turtle
+import math
+
+# 1. Ustawienie układu współrzędnych (zgodnie z poleceniem)
+turtle.setworldcoordinates(-400, 0, 400, 800)
+
+t = turtle.Turtle()
+t.speed(5) # Ustawiam nieco szybciej, żeby nie czekać długo
+
+# 2. Zmienne podane w zadaniu
+szerokosc_domu = 600
+wysokosc_sciany = 200
+szerokosc_drzwi = 50
+wysokosc_drzwi = 90
+
+# 3. Obliczenia dodatkowe z wykorzystaniem math.sqrt()
+# Musimy ustalić wysokość samego dachu (trójkąta), żeby go narysować.
+# Przyjmijmy, że wysokość dachu to np. 250 jednostek.
+wysokosc_dachu = 250
+
+# Połowa szerokości domu (podstawa trójkąta prostokątnego tworzącego dach)
+polowa_domu = szerokosc_domu / 2
+
+# Obliczamy długość krawędzi dachu (przeciwprostokątna) z twierdzenia Pitagorasa
+# c = pierwiastek(a^2 + b^2)
+dlugosc_spadu_dachu = math.sqrt(polowa_domu**2 + wysokosc_dachu**2)
+
+# Obliczamy kąt nachylenia dachu (opcjonalne, ale pomaga precyzyjnie obrócić żółwia)
+# Używamy arcus tangens (atan) - wynik w radianach zamieniamy na stopnie
+kat_dachu = math.degrees(math.atan(wysokosc_dachu / polowa_domu))
+
+
+# --- RYSOWANIE ---
+
+# Startujemy tak, by dom był wyśrodkowany.
+# Skoro dom ma 600 szerokości, lewy róg jest na X = -300
+t.penup()
+t.goto(-szerokosc_domu / 2, 0)
+t.pendown()
+
+# 1. Rysowanie prostokąta (ściany)
+for _ in range(2):
+    t.forward(szerokosc_domu)
+    t.left(90)
+    t.forward(wysokosc_sciany)
+    t.left(90)
+
+# 2. Rysowanie dachu
+# Przesuwamy się na górę lewej ściany
+t.left(90)
+t.forward(wysokosc_sciany)
+t.right(90) # Żółw patrzy teraz w prawo
+
+# Rysujemy dach używając obliczonej długości spadu
+t.left(kat_dachu)
+t.forward(dlugosc_spadu_dachu)
+t.right(2 * kat_dachu) # Obrót w dół na drugą stronę dachu
+t.forward(dlugosc_spadu_dachu)
+
+# Poziomujemy żółwia po narysowaniu dachu
+t.setheading(0)
+
+# 3. Rysowanie drzwi
+# Musimy zejść na dół i ustawić się na środku (z uwzględnieniem szerokości drzwi)
+t.penup()
+# Środek podstawy to (0,0). Drzwi zaczynają się nieco w lewo, żeby były idealnie na środku.
+t.goto(-szerokosc_drzwi / 2, 0) 
+t.pendown()
+
+# Rysujemy futrynę
+t.left(90)
+t.forward(wysokosc_drzwi)
+t.right(90)
+t.forward(szerokosc_drzwi)
+t.right(90)
+t.forward(wysokosc_drzwi)
+
+turtle.done()

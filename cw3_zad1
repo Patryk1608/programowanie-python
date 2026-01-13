@@ -1,0 +1,20 @@
+zmienna = 3.1415
+
+print(f"Badana zmienna to: {zmienna}")
+
+# 1. Sprawdzamy czy zmienna jest w ogóle liczbą (int lub float)
+if isinstance(zmienna, (int, float)):
+    
+    # 2. Jeśli jest floatem, sprawdzamy metodą .is_integer() czy nie ma części ułamkowej
+    if isinstance(zmienna, float):
+        if zmienna.is_integer():
+            print("Zmienna jest typu float, ale ma wartość CAŁKOWITĄ.")
+        else:
+            print("Zmienna jest liczbą RZECZYWISTĄ (niecałkowitą).")
+            
+    # 3. Jeśli jest intem, to z definicji jest całkowita
+    elif isinstance(zmienna, int):
+        print("Zmienna jest liczbą CAŁKOWITĄ (typ int).")
+
+else:
+    print("Podana zmienna nie jest liczbą.")

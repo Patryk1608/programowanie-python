@@ -1,0 +1,37 @@
+import requests
+import csv
+import time
+import numpy as np
+from datetime import datetime #Potrzebne do obsługi dat
+
+url = "https://danepubliczne.imgw.pl/api/data/synop/format/csv"
+
+dane_imgw = requests.get(url)
+dane_tekst = dane_imgw.text.splitlines()
+
+csvreader = csv.reader(dane_tekst)
+naglowki = next(csvreader)
+
+dostepne_stacje = []
+
+for wiersz in csvreader:
+    print(wiersz[0] + " " + wiersz[1])
+    dostepne_stacje.append(wiersz)
+
+wybrane_id = input("Prosze podac ID stacji: ")
+
+nazwa_stacji = ""
+
+while nazwa_stacji == "":
+    
+    wybrane_id = input("\nPodaj ID stacji z listy powyżej: ")
+
+    for stacja in dostepne_stacje:
+        if stacja[0] == wybrane_id:
+            nazwa_stacji = stacja[1]
+            break
+
+    if nazwa_stacji == "":
+        print("BŁĄD: Nie ma stacji o kodzie " + wybrane_id + ". Spróbuj ponownie.")
+
+print("Wybrano stację: " + nazwa_stacji)
