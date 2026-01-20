@@ -1,3 +1,4 @@
+#etap1
 import requests
 import csv
 import time
@@ -37,7 +38,7 @@ print("Wybrano stacje: " + nazwa_stacji)
 
 
 
-
+#etap2
 data_koncowa = None
 
 while data_koncowa == None:
@@ -62,7 +63,7 @@ while data_koncowa == None:
 
 
 
-
+#etap3
 zebrane_pomiary = []
 ostatnia_godzina = ""
 
@@ -100,7 +101,7 @@ print("\nKoniec czasu. Przechodze do zapisu wyników.")
 
 
 
-
+#etap4
 if len(zebrane_pomiary) > 0:
     
     print("\nObliczam srednia.")
