@@ -18,20 +18,112 @@ for wiersz in csvreader:
     print(wiersz[0] + " " + wiersz[1])
     dostepne_stacje.append(wiersz)
 
-wybrane_id = input("Prosze podac ID stacji: ")
-
 nazwa_stacji = ""
 
 while nazwa_stacji == "":
     
-    wybrane_id = input("\nPodaj ID stacji z listy powyżej: ")
+    wybrane_id = input("Podaj ID stacji z listy powyzej: ")
 
     for stacja in dostepne_stacje:
         if stacja[0] == wybrane_id:
             nazwa_stacji = stacja[1]
             break
-
+        
     if nazwa_stacji == "":
-        print("BŁĄD: Nie ma stacji o kodzie " + wybrane_id + ". Spróbuj ponownie.")
+        print("Nie ma stacji o takim kodzie. Sprobuj ponownie.\n")
 
-print("Wybrano stację: " + nazwa_stacji)
+print("Wybrano stacje: " + nazwa_stacji)
+
+
+
+
+
+data_koncowa = None
+
+while data_koncowa == None:
+    
+    print("\nDo kiedy program ma pobierac dane?")
+    wpisana_data = input("Podaj date i godzine w formacie RRRR-MM-DD GG:MM): ")
+    
+    try:
+        czas_uzytkownika = datetime.strptime(wpisana_data, "%Y-%m-%d %H:%M")
+        
+        teraz = datetime.now()
+        
+        if czas_uzytkownika > teraz:
+            data_koncowa = czas_uzytkownika
+            print("Data jest w porzadku.")
+        else:
+            print("Data musi byc z przyszlosci. Sprobuj jeszcze raz.")
+            
+    except:
+        print("Zly format daty.")
+
+
+
+
+
+zebrane_pomiary = []
+ostatnia_godzina = ""
+
+while datetime.now() < data_koncowa:
+    
+    try:
+        odpowiedz = requests.get(url)
+        odpowiedz.encoding = 'utf-8'
+        tekst = odpowiedz.text.splitlines()
+        czytnik = csv.reader(tekst)
+        
+        for wiersz in czytnik:
+            if wiersz[0] == wybrane_id:
+                
+                godzina_z_serwera = wiersz[3]
+                
+                if godzina_z_serwera != ostatnia_godzina:
+                    print("Sa nowe dane z godziny: " + godzina_z_serwera)
+                    
+                    zebrane_pomiary.append(wiersz)
+
+                    ostatnia_godzina = godzina_z_serwera
+                else:
+                    print("Brak nowych danych. Ostatni pomiar z godziny: " + ostatnia_godzina)
+                
+                break
+                
+    except:
+        print("Blad polaczenia.")
+
+    time.sleep(300) 
+
+print("\nKoniec czasu. Przechodze do zapisu wyników.")
+
+
+
+
+
+if len(zebrane_pomiary) > 0:
+    
+    print("\nObliczam srednia.")
+
+    tablica = np.array(zebrane_pomiary)
+
+    temperatury_tekst = tablica[:, 4]
+
+    temperatury_liczby = []
+    
+    for t in temperatury_tekst:
+        temperatury_liczby.append(float(t))
+
+    srednia = np.mean(temperatury_liczby)
+
+    nazwa_pliku = "raport_" + wybrane_id + ".txt"
+    
+    with open(nazwa_pliku, 'w', encoding='utf-8') as plik:
+        plik.write("Raport dla stacji: " + nazwa_stacji + "\n")
+        plik.write("Czas zakonczenia pomiarow: " + str(data_koncowa) + "\n")
+        plik.write("Srednia temeperatura z tego okresu: " + str(srednia) + "\n")
+
+    print("Wynik zapisano w pliku: " + nazwa_pliku)
+
+else:
+    print("\nNiestety, w podanym czasie nie pojawily się zadne nowe dane.")
